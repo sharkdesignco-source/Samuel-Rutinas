@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Samuel — Rutinas</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0F1117; --surface:#1A1D27; --surface2:#22263A; --border:#2E3347;
+  --accent:#6EE7B7; --accent2:#818CF8; --warn:#FBBF24; --danger:#F87171;
+  --text:#F1F5F9; --text2:#94A3B8; --text3:#64748B; --green:#34D399;
+  --radius:16px; --radius-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+/* LOADING */
+#screen-loading{align-items:center;justify-content:center;background:var(--bg)}
+.loading-logo{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;text-align:center}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-msg{color:var(--text3);font-size:.82rem;margin-top:12px;text-align:center}
+
+/* LOGIN */
+#screen-login{align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 50% 0%,#1a2744 0%,#0F1117 70%)}
+.login-logo{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;text-align:center;margin-bottom:6px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-sub{text-align:center;color:var(--text2);font-size:.85rem;margin-bottom:40px}
+.online-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.role-card{width:100%;max-width:340px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:16px;transition:border-color .2s,transform .15s;user-select:none}
+.role-card:active{transform:scale(.97)}
+.role-card:hover{border-color:var(--accent2)}
+.role-icon{font-size:2rem;width:48px;text-align:center}
+.role-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem}
+.role-desc{font-size:.78rem;color:var(--text2);margin-top:2px}
+
+/* PIN */
+.pin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:20px}
+.pin-overlay.show{display:flex}
+.pin-box{background:var(--surface);border:1.5px solid var(--border);border-radius:20px;padding:28px 24px;width:100%;max-width:320px;text-align:center}
+.pin-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:6px}
+.pin-sub{font-size:.8rem;color:var(--text2);margin-bottom:20px}
+.pin-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;text-align:center;letter-spacing:4px;outline:none;margin-bottom:16px}
+.pin-input:focus{border-color:var(--accent2)}
+.pin-error{color:var(--danger);font-size:.8rem;margin-bottom:10px;min-height:18px}
+.btn{width:100%;padding:13px;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;transition:opacity .2s,transform .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0F1117}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text2);margin-top:8px}
+
+/* APP */
+#screen-app{flex-direction:column}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;display:flex;align-items:center;gap:8px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+.sync-dot.syncing{background:var(--warn);animation:pulse .6s infinite}
+.sync-dot.offline{background:var(--danger)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.role-badge{font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--surface2);color:var(--text2)}
+.role-badge.admin{background:rgba(129,140,248,.15);color:var(--accent2)}
+.btn-logout{background:none;border:none;color:var(--text3);cursor:pointer;font-size:1.1rem;padding:4px}
+.notif-btn{position:relative;background:none;border:none;cursor:pointer;font-size:1.3rem;padding:4px}
+.notif-dot{position:absolute;top:0;right:0;width:10px;height:10px;background:var(--danger);border-radius:50%;border:2px solid var(--surface);display:none}
+.notif-dot.show{display:block}
+
+/* TABS */
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:11px 14px;font-size:.78rem;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;transition:color .2s;user-select:none;position:relative}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-badge{position:absolute;top:5px;right:3px;background:var(--danger);color:white;font-size:.55rem;font-weight:800;min-width:14px;height:14px;border-radius:7px;padding:0 3px;display:none;align-items:center;justify-content:center}
+.tab-badge.show{display:flex}
+
+.pages{flex:1;overflow-y:auto}
+.page{display:none;padding:16px;max-width:500px;margin:0 auto;padding-bottom:40px}
+.page.active{display:block}
+
+/* POINTS HERO */
+.points-hero{background:linear-gradient(135deg,#1a2a4a 0%,#1e1a3a 100%);border:1px solid var(--border);border-radius:20px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.points-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(110,231,183,.12) 0%,transparent 70%)}
+.ph-top{display:flex;justify-content:space-between;align-items:flex-start}
+.ph-label{font-size:.75rem;color:var(--text2);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.ph-pts{font-family:'Syne',sans-serif;font-size:3.2rem;font-weight:800;line-height:1;margin-top:4px;transition:color .4s}
+.ph-pts.positive{color:var(--accent)}
+.ph-pts.negative{color:var(--danger)}
+.ph-pts.zero{color:var(--text2)}
+.ph-week{font-size:.75rem;color:var(--text2);margin-top:2px}
+.ph-right{text-align:right}
+.ph-streak{background:rgba(251,191,36,.15);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:.78rem;font-weight:700;display:inline-block}
+.ph-level{font-size:.75rem;color:var(--text2);margin-top:6px}
+.ph-level span{color:var(--accent2);font-weight:700}
+.prog-wrap{margin-top:14px}
+.prog-label{display:flex;justify-content:space-between;font-size:.72rem;color:var(--text2);margin-bottom:6px}
+.prog-track{background:var(--surface2);border-radius:20px;height:7px;overflow:hidden}
+.prog-fill{height:100%;border-radius:20px;transition:width .5s ease}
+.prog-fill.recovering{background:linear-gradient(90deg,var(--danger),var(--warn))}
+.prog-fill.earning{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* ALERTS */
+.alert{border-radius:var(--radius-sm);padding:10px 14px;font-size:.8rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.alert-warn{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--warn)}
+.alert-danger{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--danger)}
+.alert-success{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--green)}
+.alert-info{background:rgba(129,140,248,.1);border:1px solid rgba(129,140,248,.3);color:var(--accent2)}
+
+/* SECTION */
+.sec-header{display:flex;align-items:center;gap:8px;margin:18px 0 10px}
+.sec-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem}
+.sec-badge{font-size:.7rem;background:var(--surface2);color:var(--text2);padding:2px 8px;border-radius:20px;margin-left:auto}
+
+/* TASKS */
+.task{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:12px;user-select:none;transition:transform .1s}
+.task.clickable{cursor:pointer}
+.task.clickable:active{transform:scale(.98)}
+.task.done{opacity:.5}
+.task.done .task-name{text-decoration:line-through}
+.task-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.85rem;transition:all .2s}
+.task.done .task-check{background:var(--green);border-color:var(--green);color:#0F1117}
+.task-info{flex:1;min-width:0}
+.task-name{font-weight:600;font-size:.88rem}
+.task-sub{font-size:.72rem;color:var(--text3);margin-top:2px}
+
+/* PENALTIES */
+.penalty{background:var(--surface);border:1px solid rgba(248,113,113,.2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:12px}
+.pen-icon{font-size:1.2rem}
+.pen-info{flex:1}
+.pen-name{font-weight:600;font-size:.88rem}
+.pen-pts{font-size:.75rem;font-weight:700;color:var(--danger)}
+.btn-apply{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);color:var(--danger);border-radius:8px;padding:6px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.75rem;cursor:pointer}
+
+/* EXTRAS */
+.extra-card{background:var(--surface);border:1px solid rgba(110,231,183,.2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:12px}
+.extra-info{flex:1}
+.extra-name{font-weight:600;font-size:.88rem}
+.extra-pts{font-size:.75rem;font-weight:700;color:var(--accent)}
+.btn-extra{background:rgba(110,231,183,.12);border:1px solid rgba(110,231,183,.3);color:var(--accent);border-radius:8px;padding:6px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.75rem;cursor:pointer}
+
+/* PRIV LOCKS */
+.priv-lock-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.lock-icon{font-size:1.5rem}
+.lock-info{flex:1}
+.lock-name{font-weight:700;font-size:.9rem}
+.lock-status{font-size:.75rem;margin-top:2px}
+.lock-status.locked{color:var(--danger)}
+.lock-status.unlocked{color:var(--green)}
+.toggle-lock{background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text2);font-family:'DM Sans',sans-serif;font-weight:700;font-size:.75rem;cursor:pointer}
+.toggle-lock.locking{border-color:rgba(248,113,113,.4);color:var(--danger)}
+.toggle-lock.unlocking{border-color:rgba(52,211,153,.4);color:var(--green)}
+
+/* REWARDS */
+.reward{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.rew-icon{font-size:1.6rem}
+.rew-info{flex:1}
+.rew-name{font-weight:700;font-size:.9rem}
+.rew-cost{font-size:.75rem;color:var(--text2);margin-top:2px}
+.rew-sub{font-size:.7rem;color:var(--text3);margin-top:2px}
+.btn-request{background:linear-gradient(135deg,var(--warn),#f97316);border:none;border-radius:8px;padding:8px 14px;color:#0F1117;font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap;transition:opacity .2s,transform .15s}
+.btn-request:active{transform:scale(.95)}
+.btn-request:disabled{background:var(--surface2);color:var(--text3);cursor:not-allowed}
+.btn-request.pending-state{background:var(--surface2);color:var(--warn);border:1px solid rgba(251,191,36,.3);font-size:.72rem}
+
+/* HISTORY */
+.hist-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:6px;font-size:.82rem}
+.hist-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hist-dot.pos{background:var(--green)}
+.hist-dot.neg{background:var(--danger)}
+.hist-label{flex:1;font-size:.82rem}
+.hist-time{font-size:.68rem;color:var(--text3)}
+.hist-pts{font-weight:700;white-space:nowrap}
+.hist-pts.pos{color:var(--green)}
+.hist-pts.neg{color:var(--danger)}
+.btn-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.95rem;padding:2px 5px;border-radius:5px;flex-shrink:0;transition:color .2s,background .2s;line-height:1}
+.btn-del:hover{color:var(--danger);background:rgba(248,113,113,.1)}
+
+/* CANJE REQUESTS */
+.canje-card{background:var(--surface);border:1px solid rgba(251,191,36,.3);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px}
+.canje-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.canje-icon{font-size:1.5rem}
+.canje-info{flex:1}
+.canje-name{font-weight:700;font-size:.9rem}
+.canje-meta{font-size:.73rem;color:var(--text2);margin-top:2px}
+.canje-actions{display:flex;gap:8px}
+.btn-approve{flex:1;background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.3);color:var(--green);border-radius:8px;padding:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer}
+.btn-reject{flex:1;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);color:var(--danger);border-radius:8px;padding:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer}
+
+/* RETRO */
+.retro-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:400;align-items:flex-end;justify-content:center}
+.retro-overlay.show{display:flex}
+.retro-box{background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.retro-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:4px}
+.retro-sub{font-size:.8rem;color:var(--text2);margin-bottom:20px}
+.day-selector{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.day-btn{flex-shrink:0;padding:8px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;color:var(--text2);transition:all .15s}
+.day-btn.sel{background:var(--accent2);border-color:var(--accent2);color:white}
+.day-btn.today-btn{border-color:var(--accent);color:var(--accent)}
+.retro-section{margin-bottom:16px}
+.retro-sec-title{font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.shift-row{display:flex;gap:8px;margin-bottom:8px}
+.shift-toggle{flex:1;padding:10px 8px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;color:var(--text2);text-align:center;transition:all .15s}
+.shift-toggle.sel{background:rgba(110,231,183,.15);border-color:var(--accent);color:var(--accent)}
+.retro-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.retro-btn-item{padding:8px 10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-weight:600;font-size:.75rem;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:6px;transition:all .15s}
+.retro-btn-item.extra-sel{background:rgba(110,231,183,.12);border-color:rgba(110,231,183,.4);color:var(--accent)}
+.retro-btn-item.pen-sel{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.4);color:var(--danger)}
+.retro-summary{background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;font-size:.82rem}
+.retro-summary-pts{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:4px}
+.retro-summary-pts.pos{color:var(--accent)}
+.retro-summary-pts.neg{color:var(--danger)}
+.retro-summary-pts.zero{color:var(--text2)}
+
+/* WEEK INFO */
+.week-info{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.wi-label{font-size:.78rem;color:var(--text2)}
+.wi-val{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem}
+.btn-week-reset{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);color:var(--danger);border-radius:8px;padding:7px 14px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer}
+.btn-day-reset{width:100%;margin-top:8px;padding:12px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text3);font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer}
+.rule-item{background:var(--surface);border-left:3px solid var(--accent2);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:10px 14px;margin-bottom:8px;font-size:.83rem;line-height:1.5;color:var(--text2)}
+.rule-item strong{color:var(--text)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;text-align:center;max-width:300px;width:100%;animation:popIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(.75);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-icon{font-size:3rem;margin-bottom:10px}
+.modal-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:6px}
+.modal-text{font-size:.82rem;color:var(--text2);margin-bottom:20px;line-height:1.5}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 20px;border-radius:30px;font-weight:600;font-size:.85rem;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.empty-state{text-align:center;padding:24px 16px;color:var(--text3);font-size:.83rem}
+@media(max-width:380px){.ph-pts{font-size:2.6rem}.tab{padding:11px 10px;font-size:.72rem}}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="screen-loading" class="screen active">
+  <div class="loading-logo">📋 Samuel</div>
+  <div class="spinner"></div>
+  <div class="loading-msg">Conectando...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen">
+  <div class="login-logo">📋 Samuel</div>
+  <p class="login-sub"><span class="online-dot"></span>Conectado y sincronizado</p>
+  <div class="role-card" onclick="loginAs('samuel')">
+    <div class="role-icon">👦</div>
+    <div><div class="role-title">Soy Samuel</div><div class="role-desc">Ver mis puntos y solicitar canjes</div></div>
+  </div>
+  <div class="role-card" onclick="showPin('Cristina')">
+    <div class="role-icon">👩</div>
+    <div><div class="role-title">Soy Cristina</div><div class="role-desc">Administrar rutinas y puntos</div></div>
+  </div>
+  <div class="role-card" onclick="showPin('Hernán')">
+    <div class="role-icon">👨</div>
+    <div><div class="role-title">Soy Hernán</div><div class="role-desc">Administrar rutinas y puntos</div></div>
+  </div>
+</div>
+
+<!-- PIN -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-title" id="pin-title">🔐 PIN de acceso</div>
+    <div class="pin-sub">Ingresa el PIN de administrador</div>
+    <input type="password" class="pin-input" id="pin-input" placeholder="••••••••" maxlength="20">
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn btn-primary" onclick="checkPin()">Ingresar</button>
+    <button class="btn btn-ghost" onclick="closePin()">Cancelar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="screen-app" class="screen">
+  <div class="topbar">
+    <div class="topbar-title">
+      <div class="sync-dot" id="sync-dot"></div>
+      Samuel
+    </div>
+    <div class="topbar-right">
+      <button class="notif-btn" id="notif-btn" onclick="goToCanjes()" style="display:none">
+        🔔<div class="notif-dot" id="notif-dot"></div>
+      </button>
+      <div class="role-badge" id="role-badge">Samuel</div>
+      <button class="btn-logout" onclick="logout()">⏻</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-page="dashboard">🏠 Inicio</div>
+    <div class="tab" data-page="morning">☀️ Mañana</div>
+    <div class="tab" data-page="afternoon">🌤 Tarde</div>
+    <div class="tab" data-page="night">🌙 Noche</div>
+    <div class="tab admin-el" data-page="admin" style="display:none">⚙️ Admin<div class="tab-badge" id="admin-tab-badge"></div></div>
+    <div class="tab" data-page="rules">📜 Reglas</div>
+  </div>
+
+  <div class="pages">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="points-hero">
+        <div class="ph-top">
+          <div>
+            <div class="ph-label">Puntos esta semana</div>
+            <div class="ph-pts zero" id="pts-display">0</div>
+            <div class="ph-week" id="week-display"></div>
+          </div>
+          <div class="ph-right">
+            <div class="ph-streak" id="streak-display">🔥 0 días</div>
+            <div class="ph-level">Nivel: <span id="level-display">Novato</span></div>
+          </div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span id="prog-next-label">—</span><span id="prog-text"></span></div>
+          <div class="prog-track"><div class="prog-fill earning" id="prog-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div id="study-block-banner" class="alert alert-danger" style="display:none">⚠️ Privilegios bloqueados hoy — no estudió.</div>
+      <div id="materia-banner" class="alert alert-warn" style="display:none">📉 Materia(s) perdida(s) — privilegios solo el fin de semana.</div>
+      <div id="negative-banner" class="alert alert-danger" style="display:none">📉 Score negativo — completa rutinas para remontar antes de canjear.</div>
+      <div class="sec-header"><div class="sec-title">🎁 Privilegios</div></div>
+      <div id="rewards-container"></div>
+      <div class="sec-header"><div class="sec-title">📋 Movimientos de hoy</div></div>
+      <div id="history-today"></div>
+    </div>
+
+    <!-- MAÑANA -->
+    <div id="page-morning" class="page">
+      <div class="sec-header"><div class="sec-title">☀️ Rutina de mañana</div><div class="sec-badge" id="badge-morning">0/6</div></div>
+      <div id="tasks-morning"></div>
+    </div>
+
+    <!-- TARDE -->
+    <div id="page-afternoon" class="page">
+      <div class="sec-header"><div class="sec-title">🌤 Rutina de tarde</div><div class="sec-badge" id="badge-afternoon">0/7</div></div>
+      <div id="tasks-afternoon"></div>
+    </div>
+
+    <!-- NOCHE -->
+    <div id="page-night" class="page">
+      <div class="sec-header"><div class="sec-title">🌙 Rutina de noche</div><div class="sec-badge" id="badge-night">0/6</div></div>
+      <div id="tasks-night"></div>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="page-admin" class="page">
+      <div class="week-info">
+        <div><div class="wi-label">Semana activa</div><div class="wi-val" id="admin-week-lbl"></div></div>
+        <button class="btn-week-reset" onclick="resetWeek()">Cerrar semana 🔄</button>
+      </div>
+      <div class="sec-header"><div class="sec-title">📅 Ingresar día pasado</div></div>
+      <button style="width:100%;padding:12px;background:rgba(129,140,248,.12);border:1.5px solid rgba(129,140,248,.3);border-radius:var(--radius-sm);color:var(--accent2);font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;margin-bottom:14px" onclick="openRetro()">+ Ingresar puntos de un día pasado</button>
+      <div class="sec-header"><div class="sec-title">🔔 Solicitudes de canje</div><div class="sec-badge" id="canje-count-badge">0</div></div>
+      <div id="canje-requests"></div>
+      <div class="sec-header"><div class="sec-title">⭐ Puntos extra</div></div>
+      <div id="extras-list"></div>
+      <div class="sec-header"><div class="sec-title">📉 Penalizaciones</div></div>
+      <div id="penalties-list"></div>
+      <div class="sec-header"><div class="sec-title">🔒 Control de privilegios</div></div>
+      <div id="priv-locks"></div>
+      <div class="sec-header"><div class="sec-title">📋 Historial completo</div></div>
+      <div id="full-history"></div>
+      <button class="btn-day-reset" onclick="resetDay()">🔄 Reiniciar tareas del día</button>
+    </div>
+
+    <!-- RULES -->
+    <div id="page-rules" class="page">
+      <div class="sec-header"><div class="sec-title">📜 Las reglas del juego</div></div>
+      <div class="rule-item"><strong>Máximo 10 puntos diarios:</strong> +2 rutina mañana · +2 rutina tarde · +2 rutina noche · +2 estudio extra · +2 buena actitud. Si completa los 3 turnos → <strong>+1 bono.</strong></div>
+      <div class="rule-item"><strong>Puntos semanales.</strong> De lunes a domingo. Si no se usan, se pierden al iniciar nueva semana.</div>
+      <div class="rule-item"><strong>El score puede ser negativo.</strong> Las penalizaciones restan. Debes remontar hasta positivo antes de canjear.</div>
+      <div class="rule-item"><strong>Sin estudiar → sin privilegios ese día.</strong></div>
+      <div class="rule-item"><strong>Materias perdidas → privilegios solo el fin de semana.</strong></div>
+      <div class="rule-item"><strong>Bien hecho o no cuenta.</strong> Tarea a medias = 0 pts.</div>
+      <div class="rule-item"><strong>Dispositivos (Nintendo · TV · MP3 · PC juegos):</strong> 30 min = 10 pts · 1 hora = 20 pts.</div>
+      <div class="rule-item"><strong>Salir al parque 2h = 60 pts · Mamá hace tus cosas 1 día = 100 pts</strong> (1× al mes).</div>
+      <div class="rule-item"><strong>Penalizaciones:</strong> Sin tarea/estudio (−2) · Pierde materia (−10) · Trabajo incompleto (−2) · Mentiras (−3) · No descongela BARF (−2) · No saca perras (−2) · Usa a Thiago para TV (−3).</div>
+      <div class="rule-item"><strong>Puntos extra:</strong> Estudiar extra (+2) · Trabajos completos (+2) · Mejora nota COMPROBABLE (+10) · Buena actitud (+2) · Saca la basura (+2).</div>
+    </div>
+  </div>
+</div>
+
+<!-- RETRO MODAL -->
+<div class="retro-overlay" id="retro-overlay">
+  <div class="retro-box">
+    <div class="retro-title">📅 Ingresar día pasado</div>
+    <div class="retro-sub">Selecciona el día y lo que Samuel completó</div>
+    <div class="retro-section">
+      <div class="retro-sec-title">Día de la semana</div>
+      <div class="day-selector" id="retro-days"></div>
+    </div>
+    <div class="retro-section">
+      <div class="retro-sec-title">Turnos completados (+2 c/u)</div>
+      <div class="shift-row">
+        <button class="shift-toggle" data-shift="morning" onclick="toggleRetroShift('morning')">☀️ Mañana</button>
+        <button class="shift-toggle" data-shift="afternoon" onclick="toggleRetroShift('afternoon')">🌤 Tarde</button>
+        <button class="shift-toggle" data-shift="night" onclick="toggleRetroShift('night')">🌙 Noche</button>
+      </div>
+    </div>
+    <div class="retro-section">
+      <div class="retro-sec-title">Puntos extra</div>
+      <div class="retro-grid" id="retro-extras"></div>
+    </div>
+    <div class="retro-section">
+      <div class="retro-sec-title">Penalizaciones</div>
+      <div class="retro-grid" id="retro-pens"></div>
+    </div>
+    <div class="retro-summary">
+      <div class="retro-sec-title" style="margin-bottom:6px">Resumen</div>
+      <div class="retro-summary-pts zero" id="retro-total">+0 pts</div>
+      <div style="font-size:.78rem;color:var(--text3)" id="retro-breakdown">Nada seleccionado</div>
+    </div>
+    <button class="btn btn-primary" onclick="applyRetro()">Aplicar al score</button>
+    <button class="btn btn-ghost" onclick="closeRetro()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon" id="modal-icon">🎉</div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-text" id="modal-text"></div>
+    <button class="btn btn-primary" onclick="closeModal()">¡Entendido!</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ═══════════════════════════════════════
+//  CONFIG — CAMBIA EL PIN AQUÍ
+// ═══════════════════════════════════════
+const ADMIN_PIN = "3n4nGanja#"; // ← Cambia tu PIN aquí
+
+// ═══════════════════════════════════════
+//  FIREBASE
+// ═══════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyChmH8yYYq45tTmkSG5tHMVIYHDZsfW1e4",
+  authDomain: "samuel-rutinas.firebaseapp.com",
+  projectId: "samuel-rutinas",
+  storageBucket: "samuel-rutinas.firebasestorage.app",
+  messagingSenderId: "903649354208",
+  appId: "1:903649354208:web:2d6a1c45229a039cda4b85",
+  databaseURL: "https://samuel-rutinas-default-rtdb.firebaseio.com"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const STATE_REF = ref(db, 'state');
+
+// ═══════════════════════════════════════
+//  STATIC DATA
+// ═══════════════════════════════════════
+const TASKS = {
+  morning: [
+    {id:"m1",name:"Rutina de aseo",sub:"Baño, vestirse, lavarse dientes",icon:"🚿"},
+    {id:"m2",name:"Tender cama y recoger ropa sucia",sub:"Ropa al cesto",icon:"🛏️"},
+    {id:"m3",name:"Alimentar a las perras",sub:"Comida y agua",icon:"🐕"},
+    {id:"m4",name:"Sacar las perras al parque",sub:"Paseo matutino",icon:"🌳"},
+    {id:"m5",name:"Desayunar",sub:"Sin pantallas en la mesa",icon:"🥣"},
+    {id:"m6",name:"Tomar la ruta a las 6:45am",sub:"Puntual, con todo listo",icon:"🚌"},
+  ],
+  afternoon: [
+    {id:"a1",name:"Quitarse uniforme y colgarlo",sub:"En el closet",icon:"👕"},
+    {id:"a2",name:"Almorzar",sub:"Sentado, sin pantallas",icon:"🍽️"},
+    {id:"a3",name:"Hacer tarea / estudio",sub:"Completar todo el trabajo escolar",icon:"📚"},
+    {id:"a4",name:"Sacar las perras al parque",sub:"Paseo de tarde",icon:"🌳"},
+    {id:"a5",name:"Leer mínimo 15 minutos",sub:"Cualquier libro",icon:"📖"},
+    {id:"a6",name:"Ayudar con la limpieza",sub:"Loza, patio, recoger juguetes…",icon:"🧹"},
+    {id:"a7",name:"Sacar la basura",sub:"Cuando corresponda",icon:"🗑️"},
+  ],
+  night: [
+    {id:"n1",name:"Dar de comer a las perras",sub:"Recordatorio Alexa 7:00pm",icon:"🐕"},
+    {id:"n2",name:"Sacar las perras (noche)",sub:"Recordatorio Alexa 7:00pm",icon:"🌙"},
+    {id:"n3",name:"Descongelar carne BARF",sub:"Recordatorio Alexa — no olvidar",icon:"🥩"},
+    {id:"n4",name:"Arreglar maleta para mañana",sub:"Todo listo antes de dormir",icon:"🎒"},
+    {id:"n5",name:"Alistar uniforme",sub:"Para el día siguiente",icon:"👔"},
+    {id:"n6",name:"Ponerse pijama y lavarse dientes",sub:"Higiene nocturna completa",icon:"🪥"},
+  ]
+};
+const REWARDS = [
+  {id:"r1",name:"Dispositivo 30 min",sub:"Nintendo · TV · MP3 · PC (juegos)",icon:"🎮",cost:10},
+  {id:"r2",name:"Dispositivo 1 hora",sub:"Nintendo · TV · MP3 · PC (juegos)",icon:"🕹️",cost:20},
+  {id:"r3",name:"Salida al parque (2 horas)",sub:"Con previo aviso",icon:"🌳",cost:60},
+  {id:"r4",name:"Mamá hace tus responsabilidades 1 día",sub:"Solo 1 vez al mes",icon:"🌟",cost:100},
+];
+const PENALTIES = [
+  {id:"p1",name:"No hay tarea / no estudia",icon:"📚",pts:-2},
+  {id:"p2",name:"Pierde una materia",icon:"📉",pts:-10},
+  {id:"p3",name:"Trabajo incompleto",icon:"📋",pts:-2},
+  {id:"p4",name:"Mentiras o excusas",icon:"🤥",pts:-3},
+  {id:"p5",name:"No descongeló el BARF",icon:"🥩",pts:-2},
+  {id:"p6",name:"No sacó las perras",icon:"🐕",pts:-2},
+  {id:"p7",name:"Usó a Thiago para ver TV",icon:"📺",pts:-3},
+];
+const EXTRAS = [
+  {id:"e1",name:"Estudiar extra",icon:"📖",pts:2},
+  {id:"e2",name:"Tareas/trabajos completos",icon:"✅",pts:2},
+  {id:"e3",name:"Mejorar nota COMPROBABLE",icon:"🏆",pts:10},
+  {id:"e4",name:"Buena actitud",icon:"😊",pts:2},
+  {id:"e5",name:"Sacar la basura",icon:"🗑️",pts:2},
+];
+const PRIVILEGES = [
+  {id:"pv1",name:"Nintendo Switch",icon:"🎮"},
+  {id:"pv2",name:"Televisión",icon:"📺"},
+  {id:"pv3",name:"MP3",icon:"🎵"},
+  {id:"pv4",name:"Computador (juegos)",icon:"💻"},
+  {id:"pv5",name:"Salidas al parque",icon:"🌳"},
+];
+const DAY_NAMES = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const DAY_NAMES_FULL = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+function defaultState(){
+  return {
+    points:0, streak:0, totalEver:0,
+    weekStart: getWeekStart(),
+    doneTasks:{}, history:[],
+    studyBlock:false, materiaLost:false,
+    lockedPrivs:{}, momUsedThisMonth:false, lastMomMonth:null,
+    canjeRequests:[],
+  };
+}
+function getWeekStart(){
+  const d=new Date(), day=d.getDay(), diff=(day===0)?-6:1-day;
+  d.setDate(d.getDate()+diff); d.setHours(0,0,0,0); return d.toISOString();
+}
+function getWeekLabel(){
+  const ws=new Date(state.weekStart), we=new Date(ws);
+  we.setDate(we.getDate()+6);
+  const f=d=>d.toLocaleDateString('es-CO',{day:'numeric',month:'short'});
+  return `${f(ws)} — ${f(we)}`;
+}
+function todayKey(){ return new Date().toISOString().split('T')[0]; }
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+let state = defaultState();
+let currentRole = null;
+let pendingWho = null;
+let fbLoaded = false;
+
+// ── SYNC DOT ──
+function setSyncDot(mode){ // 'ok' | 'syncing' | 'offline'
+  const d=document.getElementById('sync-dot');
+  d.className='sync-dot'+(mode==='syncing'?' syncing':mode==='offline'?' offline':'');
+}
+
+// ── FIREBASE SAVE ──
+async function saveToFirebase(){
+  setSyncDot('syncing');
+  try {
+    await set(STATE_REF, state);
+    setSyncDot('ok');
+  } catch(e){
+    setSyncDot('offline');
+    showToast('⚠️ Error al guardar — verifica conexión');
+  }
+}
+
+// ── WEEK ROLLOVER CHECK ──
+function checkWeekRollover(){
+  const cws=getWeekStart();
+  if(state.weekStart!==cws){
+    state.points=0; state.weekStart=cws; state.doneTasks={};
+    state.history=[]; state.studyBlock=false; state.canjeRequests=[];
+    const now=new Date(), mk=`${now.getFullYear()}-${now.getMonth()}`;
+    if(state.lastMomMonth!==mk){ state.momUsedThisMonth=false; state.lastMomMonth=mk; }
+  }
+}
+
+// ── FIREBASE LISTENER ──
+onValue(STATE_REF, (snapshot) => {
+  const data = snapshot.val();
+  if(data){
+    state = data;
+    // Ensure arrays exist (Firebase drops empty arrays)
+    if(!state.history) state.history=[];
+    if(!state.canjeRequests) state.canjeRequests=[];
+    if(!state.doneTasks) state.doneTasks={};
+    if(!state.lockedPrivs) state.lockedPrivs={};
+    checkWeekRollover();
+  } else {
+    state = defaultState();
+    set(STATE_REF, state);
+  }
+  if(!fbLoaded){
+    fbLoaded=true;
+    document.getElementById('screen-loading').classList.remove('active');
+    document.getElementById('screen-login').classList.add('active');
+  }
+  if(currentRole) renderAll();
+  setSyncDot('ok');
+}, (error) => {
+  document.getElementById('screen-loading').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  setSyncDot('offline');
+  showToast('⚠️ Sin conexión — modo offline');
+});
+
+// ═══════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════
+window.loginAs = function(role){
+  currentRole=role;
+  const badge=document.getElementById('role-badge');
+  const notifBtn=document.getElementById('notif-btn');
+  document.querySelectorAll('.admin-el').forEach(el=>el.style.display=role==='admin'?'':'none');
+  if(role==='admin'){
+    badge.textContent=`${pendingWho==='Cristina'?'👩':'👨'} ${pendingWho}`;
+    badge.classList.add('admin');
+    notifBtn.style.display='';
+  } else {
+    badge.textContent='👦 Samuel';
+    badge.classList.remove('admin');
+    notifBtn.style.display='none';
+  }
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  switchPage('dashboard');
+  renderAll();
+};
+
+window.showPin = function(who){
+  pendingWho=who;
+  document.getElementById('pin-title').textContent=`🔐 PIN — ${who}`;
+  document.getElementById('pin-input').value='';
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('pin-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('pin-input').focus(),100);
+};
+window.closePin=function(){ document.getElementById('pin-overlay').classList.remove('show'); };
+window.checkPin=function(){
+  if(document.getElementById('pin-input').value===ADMIN_PIN){ closePin(); loginAs('admin'); }
+  else { document.getElementById('pin-error').textContent='PIN incorrecto.'; document.getElementById('pin-input').value=''; }
+};
+document.getElementById('pin-input').addEventListener('keydown',e=>{ if(e.key==='Enter') checkPin(); });
+window.logout=function(){
+  currentRole=null; pendingWho=null;
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+};
+
+// ═══════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════
+function renderAll(){
+  renderDashboard();
+  renderTaskPage('morning');
+  renderTaskPage('afternoon');
+  renderTaskPage('night');
+  if(currentRole==='admin') renderAdmin();
+  updateNotifDot();
+}
+
+function renderDashboard(){
+  const pts=state.points||0;
+  const el=document.getElementById('pts-display');
+  el.textContent=pts;
+  el.className='ph-pts '+(pts>0?'positive':pts<0?'negative':'zero');
+  document.getElementById('week-display').textContent=getWeekLabel();
+  document.getElementById('streak-display').textContent=`🔥 ${state.streak||0} días`;
+  const levels=[{min:0,n:'Novato'},{min:50,n:'Aprendiz'},{min:150,n:'Comprometido'},{min:300,n:'Pro'},{min:500,n:'Élite'}];
+  const lv=[...levels].reverse().find(l=>(state.totalEver||0)>=l.min);
+  document.getElementById('level-display').textContent=lv.n;
+
+  const pf=document.getElementById('prog-fill');
+  if(pts<0){
+    document.getElementById('prog-next-label').textContent=`📉 Remontando: faltan ${Math.abs(pts)} pts para llegar a 0`;
+    document.getElementById('prog-text').textContent='';
+    pf.style.width='5%'; pf.className='prog-fill recovering';
+  } else {
+    const next=REWARDS.find(r=>r.cost>pts)||REWARDS[REWARDS.length-1];
+    const prev=REWARDS.filter(r=>r.cost<=pts).pop();
+    const base=prev?prev.cost:0, range=next.cost-base;
+    const pct=range<=0?100:Math.min(100,Math.round(((pts-base)/range)*100));
+    document.getElementById('prog-next-label').textContent=`🎯 Próximo: ${next.name}`;
+    document.getElementById('prog-text').textContent=`${pts} / ${next.cost} pts`;
+    pf.style.width=pct+'%'; pf.className='prog-fill earning';
+  }
+
+  document.getElementById('study-block-banner').style.display=state.studyBlock?'flex':'none';
+  document.getElementById('materia-banner').style.display=state.materiaLost?'flex':'none';
+  document.getElementById('negative-banner').style.display=pts<0?'flex':'none';
+
+  // Rewards
+  const rc=document.getElementById('rewards-container');
+  rc.innerHTML='';
+  const isWeekend=[0,6].includes(new Date().getDay());
+  REWARDS.forEach(r=>{
+    const momUsed=r.id==='r4'&&state.momUsedThisMonth;
+    const canAfford=(state.points||0)>=r.cost;
+    const negative=(state.points||0)<=0;
+    const blockedM=state.materiaLost&&!isWeekend;
+    const blockedS=state.studyBlock;
+    const hasPending=(state.canjeRequests||[]).some(c=>c.rewardId===r.id&&c.status==='pending');
+    const disabled=!canAfford||momUsed||blockedM||blockedS||negative||hasPending;
+    let btnTxt=canAfford&&!negative?'Solicitar':negative?`Remontar ${Math.abs(state.points||0)} pts`:`Faltan ${r.cost-(state.points||0)}`;
+    if(momUsed) btnTxt='Usado este mes';
+    if(blockedM) btnTxt='Solo FDS';
+    if(blockedS) btnTxt='Bloqueado';
+    if(hasPending) btnTxt='⏳ Pendiente';
+    const isSamuel=currentRole==='samuel';
+    const isAdmin=currentRole==='admin';
+    let btn='';
+    if(isSamuel) btn=`<button class="btn-request${hasPending?' pending-state':''}" ${disabled?'disabled':''} onclick="requestCanje('${r.id}')">${btnTxt}</button>`;
+    else if(isAdmin) btn=`<button class="btn-request" ${disabled?'disabled':''} onclick="adminRedeem('${r.id}')">${canAfford&&!negative?'Canjear':btnTxt}</button>`;
+    const div=document.createElement('div');
+    div.className='reward';
+    div.innerHTML=`<div class="rew-icon">${r.icon}</div><div class="rew-info"><div class="rew-name">${r.name}</div><div class="rew-cost">${r.cost} pts${r.id==='r4'?' · 1× al mes':''}</div><div class="rew-sub">${r.sub}</div></div>${btn}`;
+    rc.appendChild(div);
+  });
+
+  // History today
+  const ht=document.getElementById('history-today');
+  const ts0=new Date(); ts0.setHours(0,0,0,0);
+  const items=(state.history||[]).filter(h=>h.ts>=ts0.getTime()).slice(-10).reverse();
+  if(!items.length){ ht.innerHTML=`<p class="empty-state">Sin movimientos hoy.</p>`; return; }
+  ht.innerHTML='';
+  items.forEach(h=>{
+    const sign=h.pts>0?'+':'';
+    const d=document.createElement('div');
+    d.className='hist-item';
+    d.innerHTML=`<div class="hist-dot ${h.pts>=0?'pos':'neg'}"></div><div class="hist-label" style="flex:1">${h.label}</div><span class="hist-pts ${h.pts>=0?'pos':'neg'}">${sign}${h.pts}</span>`;
+    ht.appendChild(d);
+  });
+}
+
+function renderTaskPage(cat){
+  const c=document.getElementById(`tasks-${cat}`);
+  const badge=document.getElementById(`badge-${cat}`);
+  const tasks=TASKS[cat];
+  const isAdmin=currentRole==='admin';
+  c.innerHTML=''; let done=0;
+  tasks.forEach(t=>{
+    const isDone=!!(state.doneTasks||{})[t.id];
+    if(isDone) done++;
+    const div=document.createElement('div');
+    div.className=`task${isDone?' done':''}${isAdmin?' clickable':''}`;
+    if(isAdmin) div.onclick=()=>toggleTask(t,cat);
+    div.innerHTML=`<div class="task-check">${isDone?'✓':''}</div><div class="task-info"><div class="task-name">${t.icon} ${t.name}</div><div class="task-sub">${t.sub}</div></div>`;
+    c.appendChild(div);
+  });
+  badge.textContent=`${done}/${tasks.length}`;
+}
+
+function renderAdmin(){
+  document.getElementById('admin-week-lbl').textContent=getWeekLabel();
+  renderCanjeRequests();
+  renderExtras();
+  renderPenalties();
+  renderPrivLocks();
+  renderFullHistory();
+  updateAdminTabBadge();
+}
+
+function renderCanjeRequests(){
+  const c=document.getElementById('canje-requests');
+  const pending=(state.canjeRequests||[]).filter(r=>r.status==='pending');
+  document.getElementById('canje-count-badge').textContent=pending.length;
+  if(!pending.length){ c.innerHTML=`<p class="empty-state">Sin solicitudes pendientes.</p>`; return; }
+  c.innerHTML='';
+  pending.forEach(req=>{
+    const d=new Date(req.ts);
+    const ts=d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric'})+' '+d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    const div=document.createElement('div');
+    div.className='canje-card';
+    div.innerHTML=`<div class="canje-top"><div class="canje-icon">${req.icon}</div><div class="canje-info"><div class="canje-name">${req.name}</div><div class="canje-meta">${req.cost} pts · ${ts}</div></div></div><div class="canje-actions"><button class="btn-approve" onclick="approveRequest('${req.id}')">✅ Aprobar</button><button class="btn-reject" onclick="rejectRequest('${req.id}')">❌ Rechazar</button></div>`;
+    c.appendChild(div);
+  });
+}
+
+function renderExtras(){
+  const c=document.getElementById('extras-list'); c.innerHTML='';
+  EXTRAS.forEach(e=>{
+    const div=document.createElement('div'); div.className='extra-card';
+    div.innerHTML=`<div style="font-size:1.3rem">${e.icon}</div><div class="extra-info"><div class="extra-name">${e.name}</div><div class="extra-pts">+${e.pts} pts</div></div><button class="btn-extra" onclick="applyExtra('${e.id}')">+${e.pts}</button>`;
+    c.appendChild(div);
+  });
+}
+
+function renderPenalties(){
+  const c=document.getElementById('penalties-list'); c.innerHTML='';
+  PENALTIES.forEach(p=>{
+    const div=document.createElement('div'); div.className='penalty';
+    div.innerHTML=`<div class="pen-icon">${p.icon}</div><div class="pen-info"><div class="pen-name">${p.name}</div><div class="pen-pts">${p.pts} pts</div></div><button class="btn-apply" onclick="applyPenalty('${p.id}')">${p.pts}</button>`;
+    c.appendChild(div);
+  });
+  // Study block
+  const sb=document.createElement('div'); sb.className='penalty'; sb.style.borderColor='rgba(251,191,36,.2)';
+  sb.innerHTML=`<div class="pen-icon">📵</div><div class="pen-info"><div class="pen-name">Bloquear privilegios hoy</div><div class="pen-pts" style="color:var(--warn)">No estudió / caso especial</div></div><button class="btn-apply" style="border-color:rgba(251,191,36,.3);color:var(--warn);background:rgba(251,191,36,.1)" onclick="toggleStudyBlock()">${state.studyBlock?'✓ Activo':'Activar'}</button>`;
+  c.appendChild(sb);
+  // Materia perdida
+  const mp=document.createElement('div'); mp.className='penalty'; mp.style.borderColor='rgba(248,113,113,.2)';
+  mp.innerHTML=`<div class="pen-icon">📉</div><div class="pen-info"><div class="pen-name">Materia(s) perdida(s) activa</div><div class="pen-pts">Privilegios solo FDS</div></div><button class="btn-apply" onclick="toggleMateria()">${state.materiaLost?'✓ Activo':'Activar'}</button>`;
+  c.appendChild(mp);
+}
+
+function renderPrivLocks(){
+  const c=document.getElementById('priv-locks'); c.innerHTML='';
+  PRIVILEGES.forEach(p=>{
+    const isLocked=!!(state.lockedPrivs||{})[p.id];
+    const div=document.createElement('div'); div.className='priv-lock-card';
+    div.innerHTML=`<div class="lock-icon">${p.icon}</div><div class="lock-info"><div class="lock-name">${p.name}</div><div class="lock-status ${isLocked?'locked':'unlocked'}">${isLocked?'🔒 Bloqueado':'✅ Disponible'}</div></div><button class="toggle-lock ${isLocked?'unlocking':'locking'}" onclick="togglePriv('${p.id}')">${isLocked?'Desbloquear':'Bloquear'}</button>`;
+    c.appendChild(div);
+  });
+}
+
+function renderFullHistory(){
+  const c=document.getElementById('full-history');
+  const items=[...(state.history||[])].reverse().slice(0,40);
+  if(!items.length){ c.innerHTML=`<p class="empty-state">Sin movimientos esta semana.</p>`; return; }
+  c.innerHTML='';
+  items.forEach(h=>{
+    const d=new Date(h.ts);
+    const ts=d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric'})+' '+d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    const sign=h.pts>0?'+':'';
+    const div=document.createElement('div'); div.className='hist-item';
+    div.innerHTML=`<div class="hist-dot ${h.pts>=0?'pos':'neg'}"></div><div style="flex:1"><div class="hist-label">${h.label}</div><div class="hist-time">${ts}</div></div><span class="hist-pts ${h.pts>=0?'pos':'neg'}">${sign}${h.pts}</span><button class="btn-del" onclick="deleteHistEntry('${h.id}')" title="Eliminar">✕</button>`;
+    c.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════
+function addHistEntry(id, label, pts){
+  if(!state.history) state.history=[];
+  state.history.push({id:id||genId(), ts:Date.now(), label, pts});
+  state.points=(state.points||0)+pts;
+  if(pts>0) state.totalEver=(state.totalEver||0)+pts;
+}
+function recalcPoints(){ state.points=(state.history||[]).reduce((s,h)=>s+h.pts,0); }
+
+window.toggleTask = function(task, cat){
+  if(currentRole!=='admin') return;
+  if(!state.doneTasks) state.doneTasks={};
+  if(state.doneTasks[task.id]){
+    delete state.doneTasks[task.id];
+    const sk=`shift-${cat}-${todayKey()}`;
+    if(state.doneTasks[sk]){
+      delete state.doneTasks[sk];
+      state.history=(state.history||[]).filter(h=>h.id!==sk);
+      recalcPoints();
+    }
+    showToast(`↩️ ${task.name} desmarcado`);
+  } else {
+    state.doneTasks[task.id]=Date.now();
+    const allDone=TASKS[cat].every(t=>state.doneTasks[t.id]);
+    const sk=`shift-${cat}-${todayKey()}`;
+    if(allDone&&!state.doneTasks[sk]){
+      state.doneTasks[sk]=Date.now();
+      const lbl=`✅ Rutina ${cat==='morning'?'mañana':cat==='afternoon'?'tarde':'noche'} completa`;
+      addHistEntry(sk, lbl, 2);
+      checkDayBonus();
+    }
+    showToast(`✓ ${task.name}`);
+  }
+  saveToFirebase();
+};
+
+function checkDayBonus(){
+  const tk=todayKey(), bk=`bonus-${tk}`;
+  if(state.doneTasks[`shift-morning-${tk}`]&&state.doneTasks[`shift-afternoon-${tk}`]&&state.doneTasks[`shift-night-${tk}`]&&!state.doneTasks[bk]){
+    state.doneTasks[bk]=Date.now();
+    addHistEntry(bk,'🌟 Bono: 3 turnos completos en el día',1);
+    showModal('🌟','¡Bono del día!','Samuel completó los 3 turnos hoy. +1 punto extra 🎉');
+  }
+}
+
+window.applyPenalty = function(id){
+  const p=PENALTIES.find(x=>x.id===id); if(!p) return;
+  addHistEntry(genId(),`${p.icon} ${p.name}`,p.pts);
+  saveToFirebase(); showToast(`${p.pts} pts — ${p.name}`);
+};
+window.applyExtra = function(id){
+  const e=EXTRAS.find(x=>x.id===id); if(!e) return;
+  addHistEntry(genId(),`${e.icon} ${e.name}`,e.pts);
+  saveToFirebase(); showToast(`+${e.pts} pts — ${e.name}`);
+};
+window.toggleStudyBlock = function(){
+  state.studyBlock=!state.studyBlock;
+  saveToFirebase(); showToast(state.studyBlock?'📵 Privilegios bloqueados':'✅ Bloqueo removido');
+};
+window.toggleMateria = function(){
+  state.materiaLost=!state.materiaLost;
+  saveToFirebase(); showToast(state.materiaLost?'📉 Materia perdida activada':'✅ Condición removida');
+};
+window.togglePriv = function(id){
+  if(!state.lockedPrivs) state.lockedPrivs={};
+  state.lockedPrivs[id]=!state.lockedPrivs[id];
+  if(!state.lockedPrivs[id]) delete state.lockedPrivs[id];
+  saveToFirebase();
+};
+window.deleteHistEntry = function(id){
+  const entry=(state.history||[]).find(h=>h.id===id); if(!entry) return;
+  if(!confirm(`¿Eliminar "${entry.label}" (${entry.pts>0?'+':''}${entry.pts} pts)?`)) return;
+  state.history=state.history.filter(h=>h.id!==id);
+  recalcPoints();
+  saveToFirebase(); showToast('🗑️ Movimiento eliminado');
+};
+
+// ── CANJE REQUESTS ──
+window.requestCanje = function(rewardId){
+  const r=REWARDS.find(x=>x.id===rewardId); if(!r) return;
+  if((state.points||0)<=0){ showToast('Score negativo, no puedes canjear'); return; }
+  if((state.points||0)<r.cost){ showToast('No tienes suficientes puntos'); return; }
+  if(state.studyBlock){ showToast('Privilegios bloqueados hoy'); return; }
+  if(state.materiaLost&&![0,6].includes(new Date().getDay())){ showToast('Solo puedes canjear el fin de semana'); return; }
+  if(r.id==='r4'&&state.momUsedThisMonth){ showToast('Ya lo usaste este mes'); return; }
+  if(!state.canjeRequests) state.canjeRequests=[];
+  if(state.canjeRequests.find(c=>c.rewardId===rewardId&&c.status==='pending')){ showToast('Ya tienes una solicitud pendiente'); return; }
+  state.canjeRequests.push({id:genId(), rewardId, name:r.name, icon:r.icon, cost:r.cost, ts:Date.now(), status:'pending'});
+  saveToFirebase(); showToast('📨 Solicitud enviada — espera aprobación de mamá o papá');
+};
+window.approveRequest = function(reqId){
+  const req=(state.canjeRequests||[]).find(c=>c.id===reqId); if(!req) return;
+  if((state.points||0)<req.cost){ showToast('Ya no tiene suficientes puntos'); req.status='rejected'; saveToFirebase(); return; }
+  req.status='approved';
+  addHistEntry(genId(),`🎁 Canjeó: ${req.name}`,-(req.cost));
+  if(req.rewardId==='r4'){ state.momUsedThisMonth=true; state.lastMomMonth=`${new Date().getFullYear()}-${new Date().getMonth()}`; }
+  saveToFirebase(); showModal(req.icon,'¡Canje aprobado!',`Samuel puede disfrutar: ${req.name} ✅`);
+};
+window.rejectRequest = function(reqId){
+  const req=(state.canjeRequests||[]).find(c=>c.id===reqId); if(!req) return;
+  req.status='rejected';
+  saveToFirebase(); showToast('❌ Solicitud rechazada');
+};
+window.adminRedeem = function(rewardId){
+  const r=REWARDS.find(x=>x.id===rewardId); if(!r) return;
+  if((state.points||0)<=0||(state.points||0)<r.cost){ showToast('Puntos insuficientes'); return; }
+  if(r.id==='r4'&&state.momUsedThisMonth){ showToast('Ya se usó este mes'); return; }
+  addHistEntry(genId(),`🎁 Canjeó: ${r.name}`,-(r.cost));
+  if(r.id==='r4'){ state.momUsedThisMonth=true; state.lastMomMonth=`${new Date().getFullYear()}-${new Date().getMonth()}`; }
+  saveToFirebase(); showModal(r.icon,'¡Premio canjeado!',`Samuel puede disfrutar: ${r.name} 🎉`);
+};
+window.goToCanjes = function(){
+  switchPage('admin');
+  setTimeout(()=>{ const el=document.getElementById('canje-requests'); if(el) el.scrollIntoView({behavior:'smooth'}); },150);
+};
+
+// ── RETROACTIVE ──
+let retroState={day:null,shifts:[],extras:[],pens:[]};
+window.openRetro = function(){
+  retroState={day:null,shifts:[],extras:[],pens:[]};
+  // Reset UI
+  document.querySelectorAll('.shift-toggle').forEach(b=>b.classList.remove('sel'));
+  buildRetroDays(); buildRetroExtras(); buildRetroPens();
+  updateRetroSummary();
+  document.getElementById('retro-overlay').classList.add('show');
+};
+window.closeRetro = function(){ document.getElementById('retro-overlay').classList.remove('show'); };
+
+function buildRetroDays(){
+  const c=document.getElementById('retro-days'); c.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(state.weekStart); d.setDate(d.getDate()+i);
+    if(d>new Date()) continue;
+    const isToday=d.toDateString()===new Date().toDateString();
+    const btn=document.createElement('button');
+    btn.className=`day-btn${isToday?' today-btn':''}`;
+    btn.textContent=`${DAY_NAMES[d.getDay()]} ${d.getDate()}`;
+    btn.dataset.date=d.toISOString().split('T')[0];
+    btn.onclick=()=>{ document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); retroState.day=btn.dataset.date; updateRetroSummary(); };
+    c.appendChild(btn);
+  }
+}
+function buildRetroExtras(){
+  const c=document.getElementById('retro-extras'); c.innerHTML='';
+  EXTRAS.forEach(e=>{
+    const btn=document.createElement('button'); btn.className='retro-btn-item';
+    btn.innerHTML=`${e.icon} ${e.name} <span style="margin-left:auto;font-size:.7rem">+${e.pts}</span>`;
+    btn.onclick=()=>{ const idx=retroState.extras.indexOf(e.id); idx>=0?(retroState.extras.splice(idx,1),btn.classList.remove('extra-sel')):(retroState.extras.push(e.id),btn.classList.add('extra-sel')); updateRetroSummary(); };
+    c.appendChild(btn);
+  });
+}
+function buildRetroPens(){
+  const c=document.getElementById('retro-pens'); c.innerHTML='';
+  PENALTIES.forEach(p=>{
+    const btn=document.createElement('button'); btn.className='retro-btn-item';
+    btn.innerHTML=`${p.icon} ${p.name} <span style="margin-left:auto;font-size:.7rem">${p.pts}</span>`;
+    btn.onclick=()=>{ const idx=retroState.pens.indexOf(p.id); idx>=0?(retroState.pens.splice(idx,1),btn.classList.remove('pen-sel')):(retroState.pens.push(p.id),btn.classList.add('pen-sel')); updateRetroSummary(); };
+    c.appendChild(btn);
+  });
+}
+window.toggleRetroShift = function(shift){
+  const btn=document.querySelector(`.shift-toggle[data-shift="${shift}"]`);
+  const idx=retroState.shifts.indexOf(shift);
+  idx>=0?(retroState.shifts.splice(idx,1),btn.classList.remove('sel')):(retroState.shifts.push(shift),btn.classList.add('sel'));
+  updateRetroSummary();
+};
+function calcRetroTotal(){
+  let total=0, parts=[];
+  retroState.shifts.forEach(s=>{ total+=2; parts.push(`+2 ${s==='morning'?'mañana':s==='afternoon'?'tarde':'noche'}`); });
+  if(retroState.shifts.length===3){ total+=1; parts.push('+1 bono'); }
+  retroState.extras.forEach(id=>{ const e=EXTRAS.find(x=>x.id===id); if(e){ total+=e.pts; parts.push(`+${e.pts} ${e.name}`); } });
+  retroState.pens.forEach(id=>{ const p=PENALTIES.find(x=>x.id===id); if(p){ total+=p.pts; parts.push(`${p.pts} ${p.name}`); } });
+  return {total,parts};
+}
+function updateRetroSummary(){
+  const {total,parts}=calcRetroTotal();
+  const el=document.getElementById('retro-total');
+  el.textContent=(total>=0?'+':'')+total+' pts';
+  el.className='retro-summary-pts '+(total>0?'pos':total<0?'neg':'zero');
+  document.getElementById('retro-breakdown').textContent=parts.length?parts.join(' · '):'Nada seleccionado';
+}
+window.applyRetro = function(){
+  if(!retroState.day){ showToast('Selecciona un día primero'); return; }
+  const {total,parts}=calcRetroTotal();
+  if(total===0&&!retroState.shifts.length&&!retroState.extras.length&&!retroState.pens.length){ showToast('Nada seleccionado'); return; }
+  const dayName=DAY_NAMES_FULL[new Date(retroState.day+'T12:00:00').getDay()];
+  const retroTs=new Date(retroState.day+'T12:00:00').getTime();
+  if(!state.history) state.history=[];
+  retroState.shifts.forEach((s,i)=>{
+    const lbl=`☀️📅 ${dayName}: rutina ${s==='morning'?'mañana':s==='afternoon'?'tarde':'noche'}`;
+    state.history.push({id:genId(),ts:retroTs+i*10,label:lbl,pts:2});
+    state.points=(state.points||0)+2; state.totalEver=(state.totalEver||0)+2;
+  });
+  if(retroState.shifts.length===3){
+    state.history.push({id:genId(),ts:retroTs+50,label:`🌟📅 ${dayName}: bono día completo`,pts:1});
+    state.points=(state.points||0)+1; state.totalEver=(state.totalEver||0)+1;
+  }
+  retroState.extras.forEach((id,i)=>{ const e=EXTRAS.find(x=>x.id===id); if(!e) return;
+    state.history.push({id:genId(),ts:retroTs+100+i*10,label:`${e.icon}📅 ${dayName}: ${e.name}`,pts:e.pts});
+    state.points=(state.points||0)+e.pts; if(e.pts>0) state.totalEver=(state.totalEver||0)+e.pts;
+  });
+  retroState.pens.forEach((id,i)=>{ const p=PENALTIES.find(x=>x.id===id); if(!p) return;
+    state.history.push({id:genId(),ts:retroTs+200+i*10,label:`${p.icon}📅 ${dayName}: ${p.name}`,pts:p.pts});
+    state.points=(state.points||0)+p.pts;
+  });
+  saveToFirebase(); closeRetro();
+  showToast(`📅 ${dayName} ingresado: ${total>=0?'+':''}${total} pts`);
+};
+
+// ── RESET ──
+window.resetDay = function(){
+  if(!confirm('¿Reiniciar tareas del día? Los puntos de la semana se mantienen.')) return;
+  const tk=todayKey();
+  const allIds=[...TASKS.morning,...TASKS.afternoon,...TASKS.night].map(t=>t.id);
+  allIds.forEach(id=>{ if(state.doneTasks) delete state.doneTasks[id]; });
+  [`shift-morning-${tk}`,`shift-afternoon-${tk}`,`shift-night-${tk}`,`bonus-${tk}`].forEach(k=>{ if(state.doneTasks) delete state.doneTasks[k]; });
+  saveToFirebase(); showToast('🔄 Tareas del día reiniciadas');
+};
+window.resetWeek = function(){
+  if(!confirm('¿Cerrar la semana? Los puntos no usados se pierden.')) return;
+  state.points=0; state.weekStart=getWeekStart(); state.doneTasks={};
+  state.history=[]; state.studyBlock=false; state.canjeRequests=[];
+  saveToFirebase(); showToast('📅 Nueva semana iniciada');
+};
+
+// ═══════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════
+function updateNotifDot(){
+  const pending=(state.canjeRequests||[]).filter(r=>r.status==='pending').length;
+  document.getElementById('notif-dot').classList.toggle('show',pending>0);
+  updateAdminTabBadge();
+}
+function updateAdminTabBadge(){
+  const pending=(state.canjeRequests||[]).filter(r=>r.status==='pending').length;
+  const badge=document.getElementById('admin-tab-badge');
+  if(badge){ badge.textContent=pending||''; badge.classList.toggle('show',pending>0); }
+}
+
+function switchPage(page){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const tab=document.querySelector(`.tab[data-page="${page}"]`);
+  if(tab) tab.classList.add('active');
+  const pg=document.getElementById(`page-${page}`);
+  if(pg) pg.classList.add('active');
+}
+window.switchPage = switchPage;
+document.querySelectorAll('.tab').forEach(t=>{ t.addEventListener('click',()=>switchPage(t.dataset.page)); });
+
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2400); }
+function showModal(icon,title,text){ document.getElementById('modal-icon').textContent=icon; document.getElementById('modal-title').textContent=title; document.getElementById('modal-text').textContent=text; document.getElementById('modal').classList.add('show'); }
+window.closeModal=function(){ document.getElementById('modal').classList.remove('show'); };
+</script>
+</body>
+</html>
